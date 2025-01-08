@@ -28,13 +28,14 @@
 
 export default function bubble_sort(arr: number[]): void {
     let tmp;
-    for (let i = 0; i < arr.length; ++i) {
-        // -1 because we compare the current element to the next element and we don't want to go off the array
-        for (let j = 0; j < arr.length - 1 - i; ++j) {
+    // The first loop must start at 1, otherwise we would go off the array
+    // limit when we check `arr[j + 1]`.
+    for (let i = 1; i < arr.length; ++i) {
+        for (let j = 0; j < arr.length - i; ++j) {
             if (arr[j] > arr[j + 1]) {
-                tmp = arr[j + 1];
-                arr[j + 1] = arr[j];
-                arr[j] = tmp;
+                tmp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = tmp;
             }
         }
     }
