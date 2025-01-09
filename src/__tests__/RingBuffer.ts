@@ -1,7 +1,7 @@
 import RingBuffer from "@code/RingBuffer";
 
 test("RingBuffer", function () {
-    const buffer = new RingBuffer(4);
+    const buffer = new RingBuffer(3);
 
     buffer.push(5);
     expect(buffer.pop()).toEqual(5);
@@ -16,17 +16,20 @@ test("RingBuffer", function () {
     buffer.push(42);
     buffer.push(9);
     buffer.push(12);
+    buffer.push(51);
     expect(buffer.pop()).toEqual(12);
     expect(buffer.pop()).toEqual(9);
     expect(buffer.pop()).toEqual(42);
 
-    buffer.push(1);
-    buffer.push(2);
-    buffer.push(3);
-    buffer.push(4);
-    expect(buffer.pop()).toEqual(3);
-
-    //expect(buffer.get(2)).toEqual(12);
-    //expect(buffer.get(1)).toEqual(9);
-    //expect(buffer.get(0)).toEqual(42);
+    buffer.push(42);
+    buffer.enqueue(9);
+    buffer.enqueue(12);
+    buffer.enqueue(51);
+    expect(buffer.pop()).toEqual(42);
+    expect(buffer.dequeue()).toEqual(12);
+    expect(buffer.dequeue()).toEqual(9);
+    expect(buffer.dequeue()).toEqual(undefined);
+    expect(buffer.pop()).toEqual(undefined);
+    buffer.enqueue(41);
+    expect(buffer.pop()).toEqual(41);
 });

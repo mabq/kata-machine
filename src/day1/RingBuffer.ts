@@ -1,13 +1,12 @@
 export default class RingBufferUint8 {
-    public buffer: Int8Array;
-    public head: number;
-    public tail: number;
+    private buffer: Int8Array;
+    private head: number;
+    private tail: number;
 
     constructor(length: number) {
-        let m = Math.floor(length / 2);
         this.buffer = new Int8Array(length);
-        this.head = m;
-        this.tail = m;
+        this.head = 0;
+        this.tail = 0;
     }
 
     getRingIndex(pos: number): number {
@@ -26,38 +25,73 @@ export default class RingBufferUint8 {
         }
     }
 
-    //checkSpace(): boolean {
-    //    return (
-    //        this.tail >= this.head && this.tail - this.head < this.buffer.length
-    //    );
-    //}
-
     push(value: number): void {
+        // exclusive put: write, then move
         this.checkValue(value);
-        const newTail = this.tail + 1;
-        if (newTail - this.head >= this.buffer.length) {
-            console.log("Array is full");
+        if (this.tail - this.head >= this.buffer.length) {
+            console.log(`Array is full - cannot push ${value}`);
         } else {
-            this.tail = newTail;
-            const i = this.getRingIndex(newTail);
+            const i = this.getRingIndex(this.tail);
             this.buffer[i] = value;
+            this.tail++;
         }
     }
 
     pop(): number | void {
-        const newTail = this.tail - 1;
-        if (newTail < this.head) {
-            console.log("Empty array");
+        // exclusive get: move, then get
+        if (this.tail <= this.head) {
+            console.log("Array is empty");
         } else {
+            this.tail--;
             const i = this.getRingIndex(this.tail);
             const v = this.buffer[i];
-            this.tail = newTail;
+            this.buffer[i] = 0; // free memory, 0 is the base value
             return v;
         }
     }
 
-    peek(index: number): number | undefined {
-        const i = this.getRingIndex(index);
-        return this.buffer[i];
+    enqueue(value: number): void {
+        // inclusive put: move, then write
+        this.checkValue(value);
+        if (this.tail - this.head >= this.buffer.length) {
+            console.log(`Array is full - cannot enqueue ${value}`);
+        } else {
+            this.head--;
+            const i = this.getRingIndex(this.head);
+            this.buffer[i] = value;
+        }
+    }
+
+    dequeue(): number | void {
+        // exclusive get: get, then move
+        if (this.tail <= this.head) {
+            console.log("Array is empty");
+        } else {
+            const i = this.getRingIndex(this.head);
+            const v = this.buffer[i];
+            this.buffer[i] = 0; // free memory, 0 is the base value
+            this.head++;
+            return v;
+        }
+    }
+
+    at(index: number): number | void {
+        if (
+            this.tail != this.head &&
+            index >= this.head &&
+            index <= this.tail
+        ) {
+            const i = this.getRingIndex(index);
+            return this.buffer.at(i);
+        }
+        return undefined;
+    }
+
+    getLength() {
+        console.log(this.buffer.length);
+    }
+
+    bytes_per_element() {
+        console.log(this.buffer.BYTES_PER_ELEMENT);
     }
 }
