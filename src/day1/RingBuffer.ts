@@ -1,12 +1,15 @@
+// Note: Always make the start marker inclusive and the end marker exclusive.
+
 export default class RingBufferUint8 {
     private buffer: Int8Array;
     private head: number;
     private tail: number;
 
     constructor(length: number) {
+        const m = Math.floor(length / 2);
         this.buffer = new Int8Array(length);
-        this.head = 0;
-        this.tail = 0;
+        this.head = m;
+        this.tail = m;
     }
 
     getRingIndex(pos: number): number {
