@@ -1,142 +1,110 @@
-function preference_ranking(current: Point, end: Point) {
-    // preference ranking goes from 0..3, lower being better
-    const xDelta = end.x - current.x;
-    const yDelta = end.y - current.y;
+function rank_coordinates(current: Point, end: Point): number[] {
+    // Assigns a ranking from 0 to 3 (lower is better) to all cardinal
+    // directions, based only on current and end points.
+    const delta_x = end.x - current.x;
+    const delta_y = end.y - current.y;
     let ranking;
-    // prefer longest remaining path, when equal prefer vertical movement
-    if (Math.abs(yDelta) >= Math.abs(xDelta)) {
-        if (yDelta < 0) {
-            if (xDelta < 0) {
-                ranking = { u: 0, l: 1, d: 2, r: 3 };
+    // Priorityze longest remaining path
+    if (Math.abs(delta_y) >= Math.abs(delta_x)) {
+        // Must be clockwise: [up, right, down, left]
+        if (delta_y < 0) {
+            if (delta_x < 0) {
+                ranking = [0, 3, 2, 1];
             } else {
-                ranking = { u: 0, r: 1, d: 2, l: 3 };
+                ranking = [0, 1, 2, 3];
             }
         } else {
-            if (xDelta < 0) {
-                ranking = { d: 0, l: 1, u: 2, r: 3 };
+            if (delta_x < 0) {
+                ranking = [2, 3, 0, 1];
             } else {
-                ranking = { d: 0, r: 1, u: 2, l: 3 };
+                ranking = [2, 1, 0, 3];
             }
         }
     } else {
-        if (xDelta < 0) {
-            if (yDelta < 0) {
-                ranking = { l: 0, u: 1, r: 2, d: 3 };
+        if (delta_x < 0) {
+            if (delta_y < 0) {
+                ranking = [1, 2, 3, 0];
             } else {
-                ranking = { l: 0, d: 1, r: 2, u: 3 };
+                ranking = [3, 2, 1, 0];
             }
         } else {
-            if (yDelta < 0) {
-                ranking = { r: 0, u: 1, l: 2, d: 3 };
+            if (delta_y < 0) {
+                ranking = [1, 0, 3, 2];
             } else {
-                ranking = { r: 0, d: 1, l: 2, u: 3 };
+                ranking = [3, 0, 1, 2];
             }
         }
     }
     return ranking;
 }
 
-function neighbor_to_number(value: any, wall: string): number {
-    // neigbor ranking is a number, lower is better
-    // matrix offset, walls, or dead ends will be represented with Infinity
-    return value === null || value === wall
-        ? Infinity // sentinel value denoting that you cannot go there
-        : typeof value === "number"
-          ? value
-          : 0; // empty space means we havn't been there, so 0
-}
+function rank_neighbors(maze: number[][], current: Point): number[] {
+    const { x, y } = current;
 
-function neighbors_ranking(maze: string[], wall: string, current: Point) {
-    const row_items = maze[current.y].split("");
+    const bottom_limit = maze.length - 1;
+    const right_limit = maze[0].length - 1; // all rows are the same length
 
-    const yLimit = maze.length - 1;
-    const xLimit = row_items.length - 1;
-
-    // null represents matrix offset (see `neighbor_to_number`)
-    const up =
-        current.y === 0 ? null : maze[current.y - 1].split("")[current.x];
-    const down =
-        current.y === yLimit ? null : maze[current.y + 1].split("")[current.x];
-    const left = current.x === 0 ? null : row_items[current.x - 1];
-    const right = current.x === xLimit ? null : row_items[current.x + 1];
-
-    return {
-        u: neighbor_to_number(up, wall),
-        d: neighbor_to_number(down, wall),
-        r: neighbor_to_number(right, wall),
-        l: neighbor_to_number(left, wall),
-    };
-}
-
-function get_direction(
-    maze: string[],
-    wall: string,
-    current: Point,
-    end: Point,
-) {
-    const a = preference_ranking(current, end);
-    const b = neighbors_ranking(maze, wall, current);
-    const unsorted = [
-        { up: a.u + b.u },
-        { down: a.d + b.d },
-        { left: a.l + b.l },
-        { right: a.r + b.r },
+    // Must be clockwise: [up, right, down, left]
+    return [
+        current.y === 0 ? Infinity : maze[y - 1][x], // up
+        current.x === right_limit ? Infinity : maze[y][x + 1], // right
+        current.y === bottom_limit ? Infinity : maze[y + 1][x], // down
+        current.x === 0 ? Infinity : maze[y][x - 1], // left
     ];
 }
 
-// ...mark with 4 to last visited point
-// ...mark with infinity when it is a dead end
+function calc_move(
+    maze: number[][],
+    current: Point,
+    end: Point,
+): null | { next: Point; mark: number } {
+    if (current.x === end.x && current.y === end.y) {
+        // the goal has been reached, the job is done!
+        return null;
+    }
 
-//function get_next_point(maze: string[], start: Point, end: Point) {
-//    const prefy = end.y === start.y ? 0 : end.y > start.y ? 1 : -1;
-//    const prefx = end.x === start.x ? 0 : end.x > start.x ? 1 : -1;
-//    if (!prefy && !prefx) {
-//        return null; // we are already there
-//    }
-//    const { up, right, down, left } = get_possible_moves(maze, start);
-//    if (prefy === 1) {
-//        if (down) {
-//            return { x: start.x, y: start.y + 1 };
-//        } else if () {
-//
-//        }else if () {
-//
-//        }else if () {
-//
-//        }else if () {
-//
-//        }
-//    } else if (prefy === -1 && up) {
-//        return { x: start.x, y: start.y - 1 };
-//    }
-//    if (prefx) {
-//        if (prefx === 1 && right) {
-//            return { x: start.x + 1, y: start.y };
-//        } else if (prefx === -1 && left) {
-//            return { x: start.x - 1, y: start.y };
-//        }
-//    }
-//    // can not move in the preferenced direction, move whereever you can...
-//    if (up) {
-//        return { x: start.x, y: start.y - 1 };
-//    } else if (down) {
-//        return { x: start.x, y: start.y + 1 };
-//    } else if (right) {
-//        return { x: start.x + 1, y: start.y };
-//    } else {
-//        return { x: start.x + -1, y: start.y };
-//    }
-//}
+    const a = rank_coordinates(current, end);
+    const b = rank_neighbors(maze, current);
+    const ranking = [a[0] + b[0], a[1] + b[1], a[2] + b[2], a[3] + b[3]];
 
-function get_trail_maze(maze: string[], start: Point) {
-    return maze.map((r, ri) => {
-        return ri !== start.y
-            ? r
-            : r
-                  .split("")
-                  .map((e, ei) => (ei === start.x ? "o" : e))
-                  .join("");
-    });
+    let lowest_value_index = 0;
+    let infinity_count = 0;
+    for (let i = 0; i < ranking.length; ++i) {
+        const value = ranking[i];
+        if (value < ranking[lowest_value_index]) {
+            lowest_value_index = i;
+        }
+        if (value === Infinity) {
+            infinity_count += 1;
+        }
+    }
+
+    // Visited spots get 4 points (preference over rank_coordinates)
+    const mark =
+        infinity_count >= 3 ? Infinity : maze[current.y][current.x] + 4;
+
+    let next = { ...current };
+    if (lowest_value_index === 0) {
+        next.y--;
+    } else if (lowest_value_index === 1) {
+        next.x++;
+    } else if (lowest_value_index === 2) {
+        next.y++;
+    } else {
+        next.x--;
+    }
+
+    return { next, mark };
+}
+
+function local_solve(maze: number[][], current: Point, end: Point): Point[] {
+    const result = calc_move(maze, current, end);
+    if (result === null) {
+        return [current];
+    }
+    // edit maze for next move
+    maze[current.y][current.x] = result.mark;
+    return [current, ...local_solve(maze, result.next, end)];
 }
 
 export default function solve(
@@ -145,14 +113,12 @@ export default function solve(
     start: Point,
     end: Point,
 ): Point[] {
-    // 1. wall
-    // 2. visited (drop)
-    // 3. offmap
-    // 4. end
-    const next_point = get_next_point(maze, start, end);
-    if (!next_point) {
-        return [start];
-    }
-    const trail_maze = get_trail_maze(maze, start);
-    return [start, ...solve(trail_maze, wall, next_point, end)];
+    // No need to actually use the data structured passed as input. Transform
+    // a string[] into a number[][]. This makes all other functions simpler
+    // and faster. At the beginning everything is just walls (Infinity) or
+    // empty characters (0).
+    const numbered_maze = maze.map((str) =>
+        str.split("").map((char) => (char === wall ? Infinity : 0)),
+    );
+    return local_solve(numbered_maze, start, end);
 }
