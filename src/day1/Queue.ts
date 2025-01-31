@@ -51,4 +51,3 @@ export default class Queue<T> {
         return this.head?.value;
     }
 }
-

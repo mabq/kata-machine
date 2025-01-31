@@ -12,16 +12,15 @@ export default class DoublyLinkedList<T> {
     private get_node_by_idx(idx: number): Node<T> | undefined {
         let n = this.head;
         let i = 0;
-        for (; i < idx; ++i) {
-            if (!n) {
-                return undefined;
-            }
-            n = n?.next;
+        for (; n && i < idx; ++i) {
+            n = n.next;
         }
         return n;
     }
 
-    private get_node_by_value(value: T): Node<T> | undefined {
+    private get_first_node_with_value(
+        value: T | undefined,
+    ): Node<T> | undefined {
         let n = this.head;
         while (true) {
             if (!n) {
@@ -96,34 +95,58 @@ export default class DoublyLinkedList<T> {
         this.length++;
     }
 
+    // This version of the function creates missing nodes when idx is greater than the list length
+    //insertAt(item: T, idx: number): void {
+    //    if (idx === 0) {
+    //        this.prepend(item);
+    //        return;
+    //    }
+    //
+    //    // `idx` might be any number and the list might be empty, same behaviour as JavaScript arrays
+    //    let curr = this.head;
+    //    let i = 0;
+    //    for (; i < idx; ++i) {
+    //        if (!curr) {
+    //            this.append(); // fill missing node with `undefined`
+    //            curr = this.tail;
+    //        }
+    //        curr = curr?.next;
+    //    }
+    //
+    //    if (!curr) {
+    //        this.append(item);
+    //        return;
+    //    }
+    //
+    //    const prev = curr.prev;
+    //    const next = curr;
+    //
+    //    const n = {
+    //        value: item,
+    //        prev,
+    //        next,
+    //    };
+    //
+    //    // @ts-ignore
+    //    prev.next = n;
+    //    next.prev = n;
+    //
+    //    this.length++;
+    //}
+
     insertAt(item: T, idx: number): void {
-        if (idx === 0) {
+        if (idx > this.length) {
+            throw new Error(`Invalid index`);
+        } else if (idx === 0) {
             this.prepend(item);
             return;
-        }
-        if (idx === this.length) {
+        } else if (idx === this.length) {
             this.append(item);
             return;
         }
 
-        // `idx` might be any number and the list might be empty, same behaviour as JavaScript arrays
-        let curr = this.head;
-        let i = 0;
-        for (; i < idx; ++i) {
-            if (!curr) {
-                this.append(); // fill missing node with `undefined`
-                curr = this.tail;
-            }
-            curr = curr?.next;
-        }
-
-        if (!curr) {
-            this.append(item);
-            return;
-        }
-
-        const prev = curr.prev;
-        const next = curr;
+        const next = this.get_node_by_idx(idx);
+        const prev = next?.prev;
 
         const n = {
             value: item,
@@ -131,15 +154,18 @@ export default class DoublyLinkedList<T> {
             next,
         };
 
-        // @ts-ignore
-        prev.next = n;
-        next.prev = n;
+        if (prev) {
+            prev.next = n;
+        }
+        if (next) {
+            next.prev = n;
+        }
 
         this.length++;
     }
 
-    remove(value: T): T | undefined {
-        return this.remove_node(this.get_node_by_value(value));
+    remove(value: T | undefined): T | undefined {
+        return this.remove_node(this.get_first_node_with_value(value));
     }
 
     get(idx: number): T | undefined {
